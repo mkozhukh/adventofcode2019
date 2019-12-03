@@ -7,7 +7,7 @@ import (
 )
 
 func Star1(filename string) float64 {
-	mass := common.ReadFloatLines(filename)
+	mass := common.ReadFloatLines(filename, "\n")
 
 	total := 0.0
 	for _, v := range mass {
@@ -19,7 +19,7 @@ func Star1(filename string) float64 {
 }
 
 func Star2(filename string) float64 {
-	mass := common.ReadFloatLines(filename)
+	mass := common.ReadFloatLines(filename, "\n")
 
 	total := 0.0
 	for _, v := range mass {

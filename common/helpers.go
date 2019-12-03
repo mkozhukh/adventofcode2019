@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-func ReadLines(filename string) []string {
+func ReadLines(filename, sep string) []string {
 	data, _ := ioutil.ReadFile(filename)
-	lines := strings.Split(string(data), "\n")
+	lines := strings.Split(string(data), sep)
 	fmt.Printf("Input parsed, %d lines\n", len(lines))
 
 	for i := range lines {
@@ -20,8 +20,8 @@ func ReadLines(filename string) []string {
 	return lines
 }
 
-func ReadIntLines(filename string) []int {
-	lines := ReadLines(filename)
+func ReadIntLines(filename, sep string) []int {
+	lines := ReadLines(filename, sep)
 	out := make([]int, len(lines))
 
 	var err error
@@ -35,9 +35,8 @@ func ReadIntLines(filename string) []int {
 	return out
 }
 
-
-func ReadFloatLines(filename string) []float64 {
-	lines := ReadLines(filename)
+func ReadFloatLines(filename, sep string) []float64 {
+	lines := ReadLines(filename, sep)
 	out := make([]float64, len(lines))
 
 	var err error

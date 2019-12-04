@@ -1,10 +1,10 @@
 package main
 
 import (
-	"advent/t03"
+	"advent/t04"
 )
 
 func main() {
-	t03.Star1("t03/data.txt")
-	t03.Star2("t03/data.txt")
+	t04.Star1(359282, 820401)
+	t04.Star2(359282, 820401)
 }

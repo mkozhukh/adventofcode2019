@@ -49,3 +49,10 @@ func ReadFloatLines(filename, sep string) []float64 {
 
 	return out
 }
+
+func AbsInt(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}

@@ -35,6 +35,21 @@ func ReadIntLines(filename, sep string) []int {
 	return out
 }
 
+func ReadInt64Lines(filename, sep string) []int64 {
+	lines := ReadLines(filename, sep)
+	out := make([]int64, len(lines))
+
+	var err error
+	for i := range lines {
+		out[i], err = strconv.ParseInt(lines[i], 10, 64)
+		if err != nil {
+			log.Fatalf("Can't parse string as an int '%s', at line %d", lines[i], i)
+		}
+	}
+
+	return out
+}
+
 func ReadFloatLines(filename, sep string) []float64 {
 	lines := ReadLines(filename, sep)
 	out := make([]float64, len(lines))

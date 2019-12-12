@@ -71,3 +71,19 @@ func AbsInt(x int) int {
 	}
 	return x
 }
+
+func GCD(x, y int) int {
+	for y != 0 {
+		x, y = y, x%y
+	}
+	return x
+}
+
+func LCM(v ...int) int {
+	x := v[0]
+	for i := 1; i < len(v); i++ {
+		x = x * v[i] / GCD(x, v[i])
+	}
+
+	return x
+}

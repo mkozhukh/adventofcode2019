@@ -16,22 +16,21 @@ const EQ = 8
 const BASE = 9
 
 type VM struct {
-	p      int64
-	i      int64
-	m      []int64
-	base   int64
-	input  inputCallback
-	output ouputCallback
+	p    int64
+	m    []int64
+	base int64
+
+	input        chan int64
+	inputRequest chan int64
+	output       chan int64
+	exit         chan int64
 }
 
-type inputCallback func(int64) int64
-type ouputCallback func(int64)
-
-func NewVM(state []int64, p int64, input inputCallback, output ouputCallback) *VM {
+func NewVM(state []int64, p int64) *VM {
 	m := make([]int64, len(state)+100000)
 	copy(m, state)
 
-	return &VM{p: p, m: m, input: input, output: output, i: 0}
+	return &VM{p: p, m: m, input: make(chan int64, 10), output: make(chan int64), exit: make(chan int64), inputRequest: make(chan int64)}
 }
 
 func (v *VM) Param(n int64) int64 {
@@ -66,33 +65,25 @@ func (v *VM) GetData(n int64) int64 {
 	return v.m[n]
 }
 
-func (v *VM) Run(mode bool) int64 {
+func (v *VM) Run() {
 	var out int64
 	for {
 		out = v.Next()
-		if !mode && out == -1 {
-			break
-		}
-		if mode && out == -2 {
+		if out == -2 {
+			v.exit <- out
 			break
 		}
 	}
-
-	return out
 }
 
-func (v *VM) Reset(state []int64, p int64, input inputCallback, output ouputCallback) {
+func (v *VM) Reset(state []int64, p int64) {
 	copy(v.m, state)
-	v.input = input
-	v.output = output
 	v.p = p
-	v.i = 0
 }
 
 func (v *VM) SoftReset(state []int64) {
 	copy(v.m, state)
 	v.p = 0
-	v.i = 0
 }
 
 func (v *VM) Next() int64 {
@@ -116,14 +107,13 @@ func (v *VM) Next() int64 {
 		v.SetDataParam(3, p3, v.DataParam(1, p1)*v.DataParam(2, p2))
 		v.p += 4
 	case IN:
-		v.SetDataParam(1, p1, v.input(v.i))
-		v.i += 1
+		v.inputRequest <- 1
+		t := <-v.input
+		v.SetDataParam(1, p1, t)
 		v.p += 2
 	case OUT:
-		v.output(v.DataParam(1, p1))
+		v.output <- v.DataParam(1, p1)
 		v.p += 2
-		return -1
-
 	case EQ:
 		if v.DataParam(1, p1) == v.DataParam(2, p2) {
 			v.SetDataParam(3, p3, 1)
@@ -131,7 +121,6 @@ func (v *VM) Next() int64 {
 			v.SetDataParam(3, p3, 0)
 		}
 		v.p += 4
-
 	case LS:
 		if v.DataParam(1, p1) < v.DataParam(2, p2) {
 			v.SetDataParam(3, p3, 1)
@@ -139,21 +128,18 @@ func (v *VM) Next() int64 {
 			v.SetDataParam(3, p3, 0)
 		}
 		v.p += 4
-
 	case JIT:
 		if v.DataParam(1, p1) != 0 {
 			v.p = v.DataParam(2, p2)
 		} else {
 			v.p += 3
 		}
-
 	case JIF:
 		if v.DataParam(1, p1) == 0 {
 			v.p = v.DataParam(2, p2)
 		} else {
 			v.p += 3
 		}
-
 	case BASE:
 		v.base += v.DataParam(1, p1)
 		v.p += 2

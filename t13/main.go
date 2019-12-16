@@ -4,7 +4,6 @@ import (
 	"advent/common"
 	"fmt"
 	"github.com/gdamore/tcell"
-	"time"
 )
 
 type Point struct {
@@ -17,7 +16,6 @@ func NewScreen(x, y int, screen tcell.Screen) *Screen {
 	s.X = x
 	s.Y = y
 	s.data = make([]int, x*y)
-	s.buffer = make([]int, 0, 3)
 	s.screen = screen
 
 	return &s
@@ -29,37 +27,28 @@ type Screen struct {
 
 	screen tcell.Screen
 
-	data   []int
-	buffer []int
+	data []int
 
 	X     int
 	Y     int
 	Score int
 }
 
-func (s *Screen) Put(x int64) {
-	s.buffer = append(s.buffer, int(x))
-	if len(s.buffer) == 3 {
-		x := s.buffer[0]
-		y := s.buffer[1]
-		v := s.buffer[2]
+func (s *Screen) Put(x, y, v int) {
+	if x == -1 {
+		s.Score = v
+	} else {
+		s.data[x+s.X*y] = v
 
-		if x == -1 {
-			s.Score = v
-		} else {
-			s.data[x+s.X*y] = v
-
-			if s.buffer[2] == 4 {
-				s.ball = Point{x, y}
-			} else if s.buffer[2] == 3 {
-				s.handle = Point{x, y}
-			}
-
-			if s.screen != nil {
-				s.screen.SetContent(x, y, tiles[v], nil, styles[v])
-			}
+		if v == 4 {
+			s.ball = Point{x, y}
+		} else if v == 3 {
+			s.handle = Point{x, y}
 		}
-		s.buffer = s.buffer[:0]
+
+		if s.screen != nil {
+			s.screen.SetContent(x, y, tiles[v], nil, styles[v])
+		}
 	}
 }
 
@@ -95,11 +84,24 @@ func Star1(filename string) {
 	data := common.ReadInt64Lines(filename, ",")
 
 	screen := NewScreen(37, 26, nil)
-	vm := NewVM(data, 0, nil, func(o int64) {
-		screen.Put(o)
-	})
+	vm := NewVM(data, 0)
+	go vm.Run()
 
-	vm.Run(true)
+	done := false
+	for {
+		select {
+		case <-vm.exit:
+			done = true
+		case x := <-vm.output:
+			y := <-vm.output
+			v := <-vm.output
+			screen.Put(int(x), int(y), int(v))
+		}
+
+		if done {
+			break
+		}
+	}
 
 	fmt.Printf("Star 1: %12.0d\n", screen.Count(2))
 }
@@ -115,27 +117,36 @@ func Star2(filename string) {
 
 	screen := NewScreen(37, 26, term)
 
-	vm := NewVM(data, 0, func(i int64) int64 {
-		if term != nil {
-			term.Show()
-			time.Sleep(time.Millisecond * 1)
-		}
-
-		if screen.handle.X < screen.ball.X {
-			return 1
-		}
-
-		if screen.handle.X > screen.ball.X {
-			return -1
-		}
-
-		return 0
-	}, func(o int64) {
-		screen.Put(o)
-	})
-
+	vm := NewVM(data, 0)
 	vm.SetData(0, 2)
-	vm.Run(true)
+	go vm.Run()
+
+	done := false
+	for {
+		select {
+		case <-vm.exit:
+			done = true
+		case x := <-vm.output:
+			y := <-vm.output
+			v := <-vm.output
+			screen.Put(int(x), int(y), int(v))
+		case <-vm.inputRequest:
+			if term != nil {
+				term.Show()
+			}
+			if screen.handle.X < screen.ball.X {
+				vm.input <- 1
+			} else if screen.handle.X > screen.ball.X {
+				vm.input <- -1
+			} else {
+				vm.input <- 0
+			}
+		}
+
+		if done {
+			break
+		}
+	}
 
 	if term != nil {
 		term.Fini()

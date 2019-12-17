@@ -20,6 +20,27 @@ func ReadLines(filename, sep string) []string {
 	return lines
 }
 
+func JoinInts(ints []int) string {
+	str := make([]string, len(ints))
+	for i := range ints {
+		str[i] = strconv.Itoa(ints[i])
+	}
+
+	return strings.Join(str, "")
+}
+
+func BuildInt(ints []int) int {
+	summ := 0
+	base := 1
+
+	for i := len(ints) - 1; i >= 0; i-- {
+		summ += ints[i] * base
+		base = base * 10
+	}
+
+	return summ
+}
+
 func ReadIntLines(filename, sep string) []int {
 	lines := ReadLines(filename, sep)
 	out := make([]int, len(lines))

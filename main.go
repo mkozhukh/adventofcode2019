@@ -1,19 +1,19 @@
 package main
 
 import (
-	"advent/t15"
+	"advent/t16"
 	"fmt"
 	"time"
 )
 
 func main() {
 	start := time.Now()
-	t15.Star1("t15/data.txt")
+	t16.Star1("t16/data.txt")
 	elapsed := time.Since(start)
 	fmt.Printf("took %s\n\n", elapsed)
 
 	start = time.Now()
-	t15.Star2("t15/data.txt")
+	t16.Star2("t16/data.txt")
 	elapsed = time.Since(start)
 	fmt.Printf("took %s\n\n", elapsed)
 }
